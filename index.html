@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>拼音田字格练习纸生成器</title>
 <style>
   /* 内置拼音字体：Andika Regular 子集（拉丁字母与拼音声调字母，woff2 base64 内嵌，离线可用
@@ -365,28 +368,24 @@ table.v3 td { height: var(--cw); }
     print-color-adjust: exact !important;
   }
   .toolbar { display: none !important; }
-  #pages { padding: 0 !important; margin: 0 !important; }
+  #pages { padding: 0 !important; margin: 0 !important; width: 210mm !important; }
   .sheet {
     box-shadow: none !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     border: none !important;
     width: 210mm !important;
-    height: 296.5mm !important;
-    max-height: 296.5mm !important;
-    padding: 7mm 12mm 8mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 6mm 12mm 6mm !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
     position: relative !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
-  .sheet:not(:last-child) {
-    page-break-after: always !important;
-    break-after: page !important;
-  }
-  .sheet:last-child {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
+  .sheet + .sheet {
+    page-break-before: always !important;
+    break-before: page !important;
   }
   table.grid, table.poem-grid, tr {
     page-break-inside: avoid !important;
@@ -644,7 +643,7 @@ table.v3 td { height: var(--cw); }
     });
 
     var headH = (hasTitle ? 10 : 0) + (showInfo ? 6 : 0);
-    var usable = 265 - headH; // 压缩顶部空间后，可用内容区基准扩展至 265mm（总高度严格控制在打印机物理安全范围内）
+    var usable = 245 - headH; // 预留充足物理边距与Safari页眉页脚安全余量，彻底杜绝打印分页溢出
     var rows = Math.max(4, Math.floor(usable / g.rh));
     var cellsPerPage = rows * g.cols;
 
@@ -711,7 +710,7 @@ table.v3 td { height: var(--cw); }
       root.appendChild(sheet);
     }
     $("#layoutInfo").textContent =
-      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm";
+      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm · v1.3";
   }
 
   // 诗句格：一行居中显示一句诗（含标点与空格），左右纯白留白，句间纯白间隔为拼音格高度
@@ -719,7 +718,7 @@ table.v3 td { height: var(--cw); }
     var root = $("#pages");
     var hasTitle = !!title;
     var headH = (hasTitle ? 10 : 0) + (showInfo ? 6 : 0);
-    var usable = 265 - headH;
+    var usable = 245 - headH;
     var cols = g.cols;
     var cellW = 186 / cols; // mm
     var pyh = cellW * 0.52;
@@ -794,7 +793,7 @@ table.v3 td { height: var(--cw); }
       root.appendChild(sheet);
     }
 
-    $("#layoutInfo").textContent = "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）· 句间纯白留白";
+    $("#layoutInfo").textContent = "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）· 句间纯白留白 · v1.3";
   }
 
   function esc(s) {
