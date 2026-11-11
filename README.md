@@ -2,6 +2,8 @@
 
 一款轻量、开箱即用的网页端拼音田字格与字帖生成工具。纯前端单文件实现，无需安装任何构建环境或服务端依赖，支持浏览器直接预览、一键 A4 打印及「另存为 PDF」。
 
+> 🔗 **在线演示与体验**：[https://richardguancn.github.io/jinzi/](https://richardguancn.github.io/jinzi/)
+
 ---
 
 ## 📸 版式预览
@@ -44,7 +46,11 @@
 
 ## 🚀 快速开始
 
-### 本地使用
+### 网页在线使用
+直接打开在线页面即可使用，无需下载或安装任何环境：  
+👉 [https://richardguancn.github.io/jinzi/](https://richardguancn.github.io/jinzi/)
+
+### 本地离线使用
 直接在浏览器中双击打开项目中的 `index.html` 即可开始使用。
 
 ### 导出 PDF 或打印
