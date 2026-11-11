@@ -50,17 +50,18 @@ body {
 /* 顶部配置行 */
 .config-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px 18px;
+  gap: 8px 12px;
+  flex-wrap: nowrap;
 }
 
 .config-group {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 10px 16px;
+  gap: 6px 10px;
+  min-width: 0;
 }
 
 .item-label {
@@ -69,8 +70,9 @@ body {
   color: #475569;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .custom-select, .custom-input {
@@ -79,7 +81,7 @@ body {
   background-color: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  padding: 5px 8px;
+  padding: 4px 7px;
   outline: none;
   transition: all 0.15s ease-in-out;
   font-family: inherit;
@@ -91,7 +93,11 @@ body {
 }
 
 .title-input {
-  width: 150px;
+  width: 85px;
+  transition: width 0.2s ease-in-out;
+}
+.title-input:focus {
+  width: 125px;
 }
 
 .v-divider {
@@ -407,7 +413,7 @@ table.v3 td { height: var(--cw); }
             <option value="v1" selected>拼音格 + 田字格</option>
             <option value="v2">拼音格（四线格）</option>
             <option value="v3">田字格</option>
-            <option value="v4">诗句格（五言 / 七言）</option>
+            <option value="v4">诗句格 (五言/七言)</option>
           </select>
         </label>
         <label id="colsCtl" class="item-label">每行格数
@@ -418,15 +424,34 @@ table.v3 td { height: var(--cw); }
         </label>
         <label id="poemTypeCtl" class="item-label" style="display:none">诗体
           <select id="poemType" class="custom-select">
-            <option value="auto" selected>自动识别</option>
+            <option value="auto" selected>自动</option>
             <option value="5">五言 (5格)</option>
             <option value="7">七言 (7格)</option>
           </select>
         </label>
-        <label id="poemTplCtl" class="item-label" style="display:none">空白模板
-          <select id="poemTpl" class="custom-select">
-            <option value="std" selected>标题(4格) + 作者(6格) + 正文</option>
-            <option value="pure">纯正文诗句格</option>
+        <label id="poemTitleCtl" class="item-label" style="display:none">诗题
+          <select id="poemTitleCols" class="custom-select">
+            <option value="4" selected>4 格</option>
+            <option value="0">不留</option>
+            <option value="2">2 格</option>
+            <option value="3">3 格</option>
+            <option value="4">4 格</option>
+            <option value="5">5 格</option>
+            <option value="6">6 格</option>
+            <option value="7">7 格</option>
+            <option value="8">8 格</option>
+          </select>
+        </label>
+        <label id="poemAuthorCtl" class="item-label" style="display:none">作者
+          <select id="poemAuthorCols" class="custom-select">
+            <option value="6" selected>6 格</option>
+            <option value="0">不留</option>
+            <option value="3">3 格</option>
+            <option value="4">4 格</option>
+            <option value="5">5 格</option>
+            <option value="6">6 格</option>
+            <option value="7">7 格</option>
+            <option value="8">8 格</option>
           </select>
         </label>
         <label class="item-label">页数
@@ -439,7 +464,7 @@ table.v3 td { height: var(--cw); }
             <option value="5">5 页</option>
           </select>
         </label>
-        <label class="item-label">线条颜色
+        <label class="item-label">颜色
           <select id="gridColor" class="custom-select">
             <option value="#d66a6a" selected>红色</option>
             <option value="#57a05f">绿色</option>
@@ -448,8 +473,7 @@ table.v3 td { height: var(--cw); }
         </label>
         <div class="v-divider"></div>
         <label class="item-label">标题 <input type="text" id="title" class="custom-input title-input" value="拼音田字格练习" placeholder="留空则不显示标题"></label>
-        <label class="custom-checkbox"><input type="checkbox" id="showInfo" checked> 姓名 / 日期栏</label>
-        <label id="poemFillCtl" class="custom-checkbox" style="display:none"><input type="checkbox" id="poemFillEmpty"> 补满空白诗句格</label>
+        <label class="custom-checkbox"><input type="checkbox" id="showInfo" checked> 姓名/日期</label>
       </div>
       <button class="btn-primary" onclick="window.print()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -463,9 +487,10 @@ table.v3 td { height: var(--cw); }
         <textarea id="text" class="text-area" placeholder="输入汉字或拼音字母（可多个词，用空格隔开），汉字自动注音；写诗请按「一句一行」输入；留空则为空白练习纸">春天来了，树叶黄了，</textarea>
       </div>
       <div class="options-panel">
-        <label class="item-label">每词重复
+        <label id="repeatCtl" class="item-label">每词重复
           <select id="repeat" class="custom-select"><option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
         </label>
+        <label id="poemFillCtl" class="custom-checkbox" style="display:none"><input type="checkbox" id="poemFillEmpty"> 补满空白诗句格</label>
         <label class="custom-checkbox"><input type="checkbox" id="trace" checked> 首次描红</label>
         <button class="btn-secondary" id="clearBtn">清空文字</button>
       </div>
@@ -583,8 +608,13 @@ table.v3 td { height: var(--cw); }
     if (colsEl) colsEl.style.display = poemMode ? "none" : "inline-flex";
     var poemTypeEl = $("#poemTypeCtl");
     if (poemTypeEl) poemTypeEl.style.display = poemMode ? "inline-flex" : "none";
-    var poemTplEl = $("#poemTplCtl");
-    if (poemTplEl) poemTplEl.style.display = poemMode ? "inline-flex" : "none";
+    var poemTitleEl = $("#poemTitleCtl");
+    if (poemTitleEl) poemTitleEl.style.display = poemMode ? "inline-flex" : "none";
+    var poemAuthorEl = $("#poemAuthorCtl");
+    if (poemAuthorEl) poemAuthorEl.style.display = poemMode ? "inline-flex" : "none";
+
+    var repeatEl = $("#repeatCtl");
+    if (repeatEl) repeatEl.style.display = poemMode ? "none" : "inline-flex";
     var poemFillEl = $("#poemFillCtl");
     if (poemFillEl) poemFillEl.style.display = poemMode ? "inline-flex" : "none";
 
@@ -724,7 +754,7 @@ table.v3 td { height: var(--cw); }
       root.appendChild(sheet);
     }
     $("#layoutInfo").textContent =
-      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm · v1.6";
+      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm · v1.7";
   }
 
   // 诗句格：一行居中显示一句诗（含标点与空格），左右纯白留白，句间纯白间隔为拼音格高度
@@ -775,9 +805,12 @@ table.v3 td { height: var(--cw); }
     var pages = pageVal === "auto" ? autoPages : Math.max(1, +pageVal || 1);
     $("#pageNum").options[0].textContent = "自动 (" + autoPages + " 页)";
 
-    // 获取诗体设置与空白模板设置
+    // 获取诗体设置、自定义诗题格数与自定义作者格数
     var poemTypeVal = ($("#poemType") && $("#poemType").value) || "auto";
-    var poemTplVal = ($("#poemTpl") && $("#poemTpl").value) || "std";
+    var titleEl = $("#poemTitleCols");
+    var poemTitleCols = titleEl ? +titleEl.value : 4;
+    var authorEl = $("#poemAuthorCols");
+    var poemAuthorCols = authorEl ? +authorEl.value : 6;
 
     // 确定正文主体格数（几言）：优先依用户显式选择，自动模式下统计诗句长度众数
     var bodyCols = 5;
@@ -809,21 +842,17 @@ table.v3 td { height: var(--cw); }
     var displaySents = [];
 
     if (sents.length === 0) {
-      // 场景 1：未输入文字，生成纯空白古诗练习字帖
+      // 场景 1：未输入文字，生成纯空白古诗练习字帖（支持自定义诗题与作者格数）
       for (var pIdx = 0; pIdx < pages; pIdx++) {
         var pageLines = [];
-        if (poemTplVal === "std") {
-          // 标准诗歌结构：第 1 行标题(4格) + 第 2 行作者(6格) + 正文(五言/七言)
-          pageLines.push(new Array(4).fill(null));
-          pageLines.push(new Array(6).fill(null));
-          while (pageLines.length < sentsPerPage) {
-            pageLines.push(new Array(bodyCols).fill(null));
-          }
-        } else {
-          // 纯正文诗句格
-          while (pageLines.length < sentsPerPage) {
-            pageLines.push(new Array(bodyCols).fill(null));
-          }
+        if (poemTitleCols > 0) {
+          pageLines.push(new Array(poemTitleCols).fill(null));
+        }
+        if (poemAuthorCols > 0) {
+          pageLines.push(new Array(poemAuthorCols).fill(null));
+        }
+        while (pageLines.length < sentsPerPage) {
+          pageLines.push(new Array(bodyCols).fill(null));
         }
         displaySents = displaySents.concat(pageLines);
       }
@@ -870,12 +899,15 @@ table.v3 td { height: var(--cw); }
     }
 
     if (sents.length === 0) {
-      var tplDesc = poemTplVal === "std" ? "标题(4格)+作者(6格)+正文(" + bodyCols + "格)" : "纯正文(" + bodyCols + "格)";
+      var headerParts = [];
+      if (poemTitleCols > 0) headerParts.push("诗题(" + poemTitleCols + "格)");
+      if (poemAuthorCols > 0) headerParts.push("作者(" + poemAuthorCols + "格)");
+      headerParts.push("正文(" + bodyCols + "格)");
       $("#layoutInfo").textContent =
-        "诗句格（空白练习）：每页 " + sentsPerPage + " 行 · " + tplDesc + " · 共 " + pages + " 页 · 留白居中排版 · v1.6";
+        "诗句格（空白练习）：每页 " + sentsPerPage + " 行 · " + headerParts.join(" + ") + " · 共 " + pages + " 页 · 留白居中排版 · v1.7";
     } else {
       $("#layoutInfo").textContent =
-        "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）" + (fillEmpty ? "（末尾已补满 " + bodyCols + " 格空白正文）" : "") + " · 留白居中排版 · v1.6";
+        "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）" + (fillEmpty ? "（末尾已补满 " + bodyCols + " 格空白正文）" : "") + " · 留白居中排版 · v1.7";
     }
   }
 
@@ -883,7 +915,7 @@ table.v3 td { height: var(--cw); }
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  ["layout", "cols", "poemType", "poemTpl", "pageNum", "gridColor", "title", "showInfo", "poemFillEmpty", "repeat", "trace"].forEach(function (id) {
+  ["layout", "cols", "poemType", "poemTitleCols", "poemAuthorCols", "pageNum", "gridColor", "title", "showInfo", "poemFillEmpty", "repeat", "trace"].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) {
       el.addEventListener("change", build);
