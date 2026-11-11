@@ -272,8 +272,6 @@ table.v2 .py { border-bottom: none; height: 100%; }
 }
 .py::before { top: calc(100% / 3); }
 .py::after  { top: calc(100% / 3 * 2); }
-/* 标点符号上方纯净留白，不显示四线格内部虚线 */
-.py.no-dash::before, .py.no-dash::after { display: none !important; }
 /* 拼音定位：SVG 绝对贴合四线三格，基线 100% 精准锁定在第三线 */
 .pysvg {
   position: absolute; inset: 0;
@@ -531,7 +529,7 @@ table.v3 td { height: var(--cw); }
         var fs = pyFontSize(item.py, style, pyh, cw);
         pyContent = '<svg class="pysvg"><text x="50%" y="66.67%" class="' + pyCls + '" font-size="' + fs + 'mm">' + esc(item.py) + '</text></svg>';
       }
-      var pyClass = "py" + (isPunct ? " no-dash" : "");
+      var pyClass = "py";
       py = '<div class="' + pyClass + '">' + pyContent + '</div>';
     }
     // 汉字/田字格层（v2为纯四线格，不渲染田字格层）
