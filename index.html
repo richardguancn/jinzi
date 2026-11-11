@@ -410,10 +410,23 @@ table.v3 td { height: var(--cw); }
             <option value="v4">诗句格（五言 / 七言）</option>
           </select>
         </label>
-        <label class="item-label">每行格数
+        <label id="colsCtl" class="item-label">每行格数
           <select id="cols" class="custom-select">
             <option>8</option><option>9</option><option>10</option><option>11</option>
             <option selected>12</option><option>13</option><option>14</option><option>15</option><option>16</option>
+          </select>
+        </label>
+        <label id="poemTypeCtl" class="item-label" style="display:none">诗体
+          <select id="poemType" class="custom-select">
+            <option value="auto" selected>自动识别</option>
+            <option value="5">五言 (5格)</option>
+            <option value="7">七言 (7格)</option>
+          </select>
+        </label>
+        <label id="poemTplCtl" class="item-label" style="display:none">空白模板
+          <select id="poemTpl" class="custom-select">
+            <option value="std" selected>标题(4格) + 作者(6格) + 正文</option>
+            <option value="pure">纯正文诗句格</option>
           </select>
         </label>
         <label class="item-label">页数
@@ -435,12 +448,6 @@ table.v3 td { height: var(--cw); }
         </label>
         <div class="v-divider"></div>
         <label class="item-label">标题 <input type="text" id="title" class="custom-input title-input" value="拼音田字格练习" placeholder="留空则不显示标题"></label>
-        <label id="poemCtl" class="item-label" style="display:none">每行
-          <select id="poemPerLine" class="custom-select"><option value="1" selected>1 句</option><option value="2">2 句</option></select>
-        </label>
-        <label id="poemGapCtl" class="item-label" style="display:none">隔行
-          <select id="poemGap" class="custom-select"><option value="0">紧挨</option><option value="1" selected>空 1 行</option></select>
-        </label>
         <label class="custom-checkbox"><input type="checkbox" id="showInfo" checked> 姓名 / 日期栏</label>
         <label id="poemFillCtl" class="custom-checkbox" style="display:none"><input type="checkbox" id="poemFillEmpty"> 补满空白诗句格</label>
       </div>
@@ -572,8 +579,12 @@ table.v3 td { height: var(--cw); }
     var rep = Math.max(1, +$("#repeat").value || 1);
     var trace = $("#trace").checked;
     var poemMode = g.style === "v4";
-    $("#poemCtl").style.display = "none";
-    $("#poemGapCtl").style.display = "none";
+    var colsEl = $("#colsCtl");
+    if (colsEl) colsEl.style.display = poemMode ? "none" : "inline-flex";
+    var poemTypeEl = $("#poemTypeCtl");
+    if (poemTypeEl) poemTypeEl.style.display = poemMode ? "inline-flex" : "none";
+    var poemTplEl = $("#poemTplCtl");
+    if (poemTplEl) poemTplEl.style.display = poemMode ? "inline-flex" : "none";
     var poemFillEl = $("#poemFillCtl");
     if (poemFillEl) poemFillEl.style.display = poemMode ? "inline-flex" : "none";
 
@@ -713,7 +724,7 @@ table.v3 td { height: var(--cw); }
       root.appendChild(sheet);
     }
     $("#layoutInfo").textContent =
-      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm · v1.5";
+      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm · v1.6";
   }
 
   // 诗句格：一行居中显示一句诗（含标点与空格），左右纯白留白，句间纯白间隔为拼音格高度
@@ -722,8 +733,8 @@ table.v3 td { height: var(--cw); }
     var hasTitle = !!title;
     var headH = (hasTitle ? 18 : 0) + (showInfo ? 11 : 0);
     var usable = 245 - headH;
-    var cols = g.cols;
-    var cellW = 186 / cols; // mm
+    var cols = 12; // 诗句格基准列数比例
+    var cellW = 186 / cols; // mm (约 15.5mm，标准田字格尺寸)
     var pyh = cellW * 0.52;
     var rh = cellW + pyh;
     var sentsPerPage = Math.max(2, Math.floor((usable + pyh) / (rh + pyh)));
@@ -764,23 +775,66 @@ table.v3 td { height: var(--cw); }
     var pages = pageVal === "auto" ? autoPages : Math.max(1, +pageVal || 1);
     $("#pageNum").options[0].textContent = "自动 (" + autoPages + " 页)";
 
+    // 获取诗体设置与空白模板设置
+    var poemTypeVal = ($("#poemType") && $("#poemType").value) || "auto";
+    var poemTplVal = ($("#poemTpl") && $("#poemTpl").value) || "std";
+
+    // 确定正文主体格数（几言）：优先依用户显式选择，自动模式下统计诗句长度众数
+    var bodyCols = 5;
+    if (poemTypeVal === "5") {
+      bodyCols = 5;
+    } else if (poemTypeVal === "7") {
+      bodyCols = 7;
+    } else if (sents.length > 0) {
+      var lenCount = {};
+      sents.forEach(function (items) {
+        var l = items.length;
+        lenCount[l] = (lenCount[l] || 0) + 1;
+      });
+      var maxCount = 0;
+      var dominantLen = 5;
+      for (var lKey in lenCount) {
+        if (lenCount[lKey] > maxCount) {
+          maxCount = lenCount[lKey];
+          dominantLen = +lKey;
+        }
+      }
+      if (dominantLen >= 7) bodyCols = (dominantLen >= 8 ? 8 : 7);
+      else if (dominantLen >= 5) bodyCols = (dominantLen >= 6 ? dominantLen : 5);
+      else bodyCols = 5;
+    }
+
     var fillEmptyEl = $("#poemFillEmpty");
     var fillEmpty = fillEmptyEl ? fillEmptyEl.checked : false;
     var displaySents = [];
+
     if (sents.length === 0) {
-      // 未输入文字时，生成满页居中的空白诗句格（每页满 sentsPerPage 行，每行 cols 格）
-      var totalLines = pages * sentsPerPage;
-      for (var f = 0; f < totalLines; f++) {
-        displaySents.push(new Array(cols).fill(null));
+      // 场景 1：未输入文字，生成纯空白古诗练习字帖
+      for (var pIdx = 0; pIdx < pages; pIdx++) {
+        var pageLines = [];
+        if (poemTplVal === "std") {
+          // 标准诗歌结构：第 1 行标题(4格) + 第 2 行作者(6格) + 正文(五言/七言)
+          pageLines.push(new Array(4).fill(null));
+          pageLines.push(new Array(6).fill(null));
+          while (pageLines.length < sentsPerPage) {
+            pageLines.push(new Array(bodyCols).fill(null));
+          }
+        } else {
+          // 纯正文诗句格
+          while (pageLines.length < sentsPerPage) {
+            pageLines.push(new Array(bodyCols).fill(null));
+          }
+        }
+        displaySents = displaySents.concat(pageLines);
       }
     } else {
+      // 场景 2：有输入文字
       displaySents = sents.slice();
-      // 有输入诗句且勾选补满空白格时，自动补齐到当前所有页的满格状态
       if (fillEmpty) {
-        var sampleLen = sents[0] ? sents[0].length : cols;
         var totalNeeded = pages * sentsPerPage;
         while (displaySents.length < totalNeeded) {
-          displaySents.push(new Array(sampleLen).fill(null));
+          // 末尾剩余行统一按正文格数（五言5格或七言7格）补满，杜绝误取标题2格的Bug
+          displaySents.push(new Array(bodyCols).fill(null));
         }
       }
     }
@@ -816,9 +870,12 @@ table.v3 td { height: var(--cw); }
     }
 
     if (sents.length === 0) {
-      $("#layoutInfo").textContent = "诗句格（空白练习）：每页 " + sentsPerPage + " 句 × " + cols + " 格 · 共 " + pages + " 页 · 留白居中排版 · v1.5";
+      var tplDesc = poemTplVal === "std" ? "标题(4格)+作者(6格)+正文(" + bodyCols + "格)" : "纯正文(" + bodyCols + "格)";
+      $("#layoutInfo").textContent =
+        "诗句格（空白练习）：每页 " + sentsPerPage + " 行 · " + tplDesc + " · 共 " + pages + " 页 · 留白居中排版 · v1.6";
     } else {
-      $("#layoutInfo").textContent = "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）" + (fillEmpty ? "（已补满空格）" : "") + " · 留白居中排版 · v1.5";
+      $("#layoutInfo").textContent =
+        "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）" + (fillEmpty ? "（末尾已补满 " + bodyCols + " 格空白正文）" : "") + " · 留白居中排版 · v1.6";
     }
   }
 
@@ -826,7 +883,7 @@ table.v3 td { height: var(--cw); }
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  ["layout", "cols", "pageNum", "gridColor", "title", "showInfo", "poemFillEmpty", "repeat", "trace", "poemPerLine", "poemGap"].forEach(function (id) {
+  ["layout", "cols", "poemType", "poemTpl", "pageNum", "gridColor", "title", "showInfo", "poemFillEmpty", "repeat", "trace"].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) {
       el.addEventListener("change", build);
