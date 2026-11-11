@@ -371,21 +371,22 @@ table.v3 td { height: var(--cw); }
     margin: 0 !important;
     border: none !important;
     width: 210mm !important;
-    height: auto !important;
-    min-height: auto !important;
-    max-height: 285mm !important;
+    height: 296.5mm !important;
+    max-height: 296.5mm !important;
     padding: 7mm 12mm 8mm !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
     position: relative !important;
-    page-break-after: auto !important;
-    break-after: auto !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
-  .sheet + .sheet {
-    page-break-before: always !important;
-    break-before: page !important;
+  .sheet:not(:last-child) {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  .sheet:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
   table.grid, table.poem-grid, tr {
     page-break-inside: avoid !important;
@@ -650,6 +651,7 @@ table.v3 td { height: var(--cw); }
     var cellsMap = [];
     var pos = 0;
     var hasRealContent = false;
+    var lastContentPos = -1;
 
     instances.forEach(function (inst) {
       if (inst.isBreak) {
@@ -669,13 +671,14 @@ table.v3 td { height: var(--cw); }
         cellsMap[pos + i] = inst.items[i];
         if (inst.items[i].ch || inst.items[i].py) {
           hasRealContent = true;
+          lastContentPos = pos + i;
         }
       }
       pos += len;
     });
 
-    // 根据内容自动计算页数
-    var autoPages = hasRealContent ? Math.max(1, Math.ceil(pos / cellsPerPage)) : 1;
+    // 根据有效内容单元格位置计算自动页数，彻底杜绝尾部换行或末尾空格导致多出一张空白页
+    var autoPages = hasRealContent ? Math.max(1, Math.ceil((lastContentPos + 1) / cellsPerPage)) : 1;
     var pageVal = $("#pageNum").value;
     var pages = pageVal === "auto" ? autoPages : Math.max(1, +pageVal || 1);
     $("#pageNum").options[0].textContent = "自动 (" + autoPages + " 页)";
