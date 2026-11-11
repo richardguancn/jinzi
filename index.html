@@ -583,20 +583,28 @@ table.v3 td { height: var(--cw); }
     var tokenRegex = /[\u4E00-\u9FA5]+|[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]+|[，。、；！？：：“”‘’《》（）…—,.!?;:]|[ 　]|\r?\n/g;
     var tokens = text ? (text.match(tokenRegex) || []) : [];
     var instances = [];
+    var lastWasLetter = false;
 
     tokens.forEach(function (t) {
       if (t === "\n" || t === "\r\n") {
         instances.push({ isBreak: true });
+        lastWasLetter = false;
       } else if (t === " " || t === "　") {
-        // 单个空格对应 1 个空白单元格，不随 rep 重复放大
-        instances.push({
-          items: [{ ch: "", py: "", isPunct: false, isSpace: true, tr: false, lat: false }]
-        });
+        if (lastWasLetter) {
+          // 字母/拼音之间的单空格作为区分拼音格的分隔符，不额外生成空白单元格
+          lastWasLetter = false;
+        } else {
+          // 单个空格对应 1 个空白单元格，不随 rep 重复放大
+          instances.push({
+            items: [{ ch: "", py: "", isPunct: false, isSpace: true, tr: false, lat: false }]
+          });
+        }
       } else if (PUNCT_REG.test(t)) {
         // 标点符号独占一格，不随词重复过多，保持单次出现
         instances.push({
           items: [{ ch: t, py: "", isPunct: true, isSpace: false, tr: trace, lat: false }]
         });
+        lastWasLetter = false;
       } else if (/[\u4E00-\u9FA5]/.test(t)) {
         // 汉字词：一字一音，对应到各自格中
         var han = Array.from(t).filter(function (c) { return /[\u4E00-\u9FA5]/.test(c); });
@@ -615,23 +623,22 @@ table.v3 td { height: var(--cw); }
           }
           instances.push({ items: subItems });
         }
+        lastWasLetter = false;
       } else if (isLetter(t)) {
-        // 字母/声母韵母：在四线格或田字格呈现，支持逐字母或单音节
-        var letters = Array.from(t);
+        // 字母/声母韵母/拼音音节：支持整体占一格（如 zh, ch, sh, ang 等）
         for (var r2 = 0; r2 < rep; r2++) {
-          var subItems2 = [];
-          for (var j = 0; j < letters.length; j++) {
-            subItems2.push({
-              ch: g.style === "v2" ? "" : letters[j],
-              py: letters[j],
+          instances.push({
+            items: [{
+              ch: g.style === "v2" ? "" : t,
+              py: t,
               tr: trace && r2 === 0,
               isPunct: false,
               isSpace: false,
               lat: true
-            });
-          }
-          instances.push({ items: subItems2 });
+            }]
+          });
         }
+        lastWasLetter = true;
       }
     });
 
