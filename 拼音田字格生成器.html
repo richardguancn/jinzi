@@ -357,13 +357,38 @@ table.v2 .tz, table.v3 .py { display: none; }
 table.v3 td { height: var(--cw); }
 
 @media print {
-  body { background: #fff; }
-  .toolbar { display: none; }
-  #pages { padding: 0; }
-  .sheet { box-shadow: none; margin: 0; page-break-after: always; }
-  .sheet:last-child { page-break-after: auto; }
+  html, body {
+    width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .toolbar { display: none !important; }
+  #pages { padding: 0 !important; margin: 0 !important; }
+  .sheet {
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: none !important;
+    width: 210mm !important;
+    height: 296mm !important;
+    max-height: 296mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    position: relative !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .sheet + .sheet {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
 }
-@page { size: A4; margin: 0; }
+@page { size: 210mm 297mm; margin: 0; }
 </style>
 </head>
 <body>
@@ -607,7 +632,7 @@ table.v3 td { height: var(--cw); }
     });
 
     var headH = (hasTitle ? 16 : 0) + (showInfo ? 10 : 0);
-    var usable = 275 - headH; // 内容区 297-22-headH
+    var usable = 270 - headH; // 内容区 296-22-headH，预留安全边距避免打印溢出空白页
     var rows = Math.max(4, Math.floor(usable / g.rh));
     var cellsPerPage = rows * g.cols;
 
@@ -680,7 +705,7 @@ table.v3 td { height: var(--cw); }
     var root = $("#pages");
     var hasTitle = !!title;
     var headH = (hasTitle ? 16 : 0) + (showInfo ? 10 : 0);
-    var usable = 275 - headH;
+    var usable = 270 - headH;
     var cols = g.cols;
     var cellW = 186 / cols; // mm
     var pyh = cellW * 0.52;
