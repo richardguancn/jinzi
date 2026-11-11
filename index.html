@@ -251,12 +251,12 @@ body {
 .stitle {
   font-family: "Kaiti SC", "STKaiti", "KaiTi", "FZKai-Z03S", serif;
   font-size: 18pt; text-align: center; letter-spacing: 2px; color: #111;
-  line-height: 1.15; margin: 5mm 0 3.5mm;
+  line-height: 1.15; margin: 6mm 0 6mm;
 }
 .sinfo {
   font-family: "Kaiti SC", "STKaiti", "KaiTi", serif;
   font-size: 10.5pt; color: #222; line-height: 1.2;
-  display: flex; justify-content: space-between; margin: 0 2mm 2.5mm;
+  display: flex; justify-content: space-between; margin: 0 2mm 7mm;
 }
 table.grid {
   border-collapse: collapse; table-layout: fixed;
@@ -377,7 +377,7 @@ table.v3 td { height: var(--cw); }
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    padding: 6mm 12mm 6mm !important;
+    padding: 8mm 12mm 8mm !important;
     box-sizing: border-box !important;
     position: relative !important;
     page-break-inside: avoid !important;
@@ -442,6 +442,7 @@ table.v3 td { height: var(--cw); }
           <select id="poemGap" class="custom-select"><option value="0">紧挨</option><option value="1" selected>空 1 行</option></select>
         </label>
         <label class="custom-checkbox"><input type="checkbox" id="showInfo" checked> 姓名 / 日期栏</label>
+        <label id="poemFillCtl" class="custom-checkbox" style="display:none"><input type="checkbox" id="poemFillEmpty"> 补满空白诗句格</label>
       </div>
       <button class="btn-primary" onclick="window.print()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -573,6 +574,8 @@ table.v3 td { height: var(--cw); }
     var poemMode = g.style === "v4";
     $("#poemCtl").style.display = "none";
     $("#poemGapCtl").style.display = "none";
+    var poemFillEl = $("#poemFillCtl");
+    if (poemFillEl) poemFillEl.style.display = poemMode ? "inline-flex" : "none";
 
     var root = $("#pages");
     root.textContent = "";
@@ -642,7 +645,7 @@ table.v3 td { height: var(--cw); }
       }
     });
 
-    var headH = (hasTitle ? 14 : 0) + (showInfo ? 6 : 0);
+    var headH = (hasTitle ? 18 : 0) + (showInfo ? 11 : 0);
     var usable = 245 - headH; // 预留充足物理边距与Safari页眉页脚安全余量，彻底杜绝打印分页溢出
     var rows = Math.max(4, Math.floor(usable / g.rh));
     var cellsPerPage = rows * g.cols;
@@ -710,14 +713,14 @@ table.v3 td { height: var(--cw); }
       root.appendChild(sheet);
     }
     $("#layoutInfo").textContent =
-      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm · v1.4";
+      "每页 " + rows + " 行 × " + g.cols + " 格 · 共 " + pages + " 页 · 格子约 " + g.cw.toFixed(1) + "mm · v1.5";
   }
 
   // 诗句格：一行居中显示一句诗（含标点与空格），左右纯白留白，句间纯白间隔为拼音格高度
   function buildPoem(g, grid, title, showInfo, text, trace) {
     var root = $("#pages");
     var hasTitle = !!title;
-    var headH = (hasTitle ? 14 : 0) + (showInfo ? 6 : 0);
+    var headH = (hasTitle ? 18 : 0) + (showInfo ? 11 : 0);
     var usable = 245 - headH;
     var cols = g.cols;
     var cellW = 186 / cols; // mm
@@ -761,7 +764,26 @@ table.v3 td { height: var(--cw); }
     var pages = pageVal === "auto" ? autoPages : Math.max(1, +pageVal || 1);
     $("#pageNum").options[0].textContent = "自动 (" + autoPages + " 页)";
 
-    var displaySents = sents.length ? sents : [new Array(7).fill(null)];
+    var fillEmptyEl = $("#poemFillEmpty");
+    var fillEmpty = fillEmptyEl ? fillEmptyEl.checked : false;
+    var displaySents = [];
+    if (sents.length === 0) {
+      // 未输入文字时，生成满页居中的空白诗句格（每页满 sentsPerPage 行，每行 cols 格）
+      var totalLines = pages * sentsPerPage;
+      for (var f = 0; f < totalLines; f++) {
+        displaySents.push(new Array(cols).fill(null));
+      }
+    } else {
+      displaySents = sents.slice();
+      // 有输入诗句且勾选补满空白格时，自动补齐到当前所有页的满格状态
+      if (fillEmpty) {
+        var sampleLen = sents[0] ? sents[0].length : cols;
+        var totalNeeded = pages * sentsPerPage;
+        while (displaySents.length < totalNeeded) {
+          displaySents.push(new Array(sampleLen).fill(null));
+        }
+      }
+    }
 
     for (var p = 0; p < pages; p++) {
       var sheet = document.createElement("div");
@@ -793,17 +815,23 @@ table.v3 td { height: var(--cw); }
       root.appendChild(sheet);
     }
 
-    $("#layoutInfo").textContent = "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）· 句间纯白留白 · v1.4";
+    if (sents.length === 0) {
+      $("#layoutInfo").textContent = "诗句格（空白练习）：每页 " + sentsPerPage + " 句 × " + cols + " 格 · 共 " + pages + " 页 · 留白居中排版 · v1.5";
+    } else {
+      $("#layoutInfo").textContent = "诗句格：共 " + sents.length + " 句 · 共 " + pages + " 页（每页 " + sentsPerPage + " 句）" + (fillEmpty ? "（已补满空格）" : "") + " · 留白居中排版 · v1.5";
+    }
   }
 
   function esc(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  ["layout", "cols", "pageNum", "gridColor", "title", "showInfo", "repeat", "trace", "poemPerLine", "poemGap"].forEach(function (id) {
+  ["layout", "cols", "pageNum", "gridColor", "title", "showInfo", "poemFillEmpty", "repeat", "trace", "poemPerLine", "poemGap"].forEach(function (id) {
     var el = document.getElementById(id);
-    el.addEventListener("change", build);
-    el.addEventListener("input", build);
+    if (el) {
+      el.addEventListener("change", build);
+      el.addEventListener("input", build);
+    }
   });
   // 文字输入防抖
   var timer = null;
